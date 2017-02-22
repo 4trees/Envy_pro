@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Week33 Envious!</title>
+</head>
+<body>
+  <div class="container">
+    <div class="title">
+      <h2>Envious! <span class="small"> Design by Liuhuaying</span></h2>
+      <p class="des">I envied <span id="whom">someone</span> for <span id="why">a reason</span> and learned that <span id="learned">..</span>.</p>
+    </div>
+    <div id='canvas'></div>
+  </div>
+<style>
+html{
+  font-family: 'Avenu',Helvetica;
+  color: #333;
+  background-color: #f8f4eb;
+}
+html,body{
+  height: 100%;
+  margin: 0;
+}
+.container{
+  width: 100%;
+  margin: 0 auto;
+  height: 100%;
+}
+#canvas{
+  width: 100%;
+  height: 80%;
+  margin: 0;
+}
+.title{
+  height: 15%;
+  width: 100%;
+  padding-left: 2em;
+}
+.small{
+  font-size: 50%;
+  font-weight: 200;
+}
+.des{
+  color: #666;
+}
+path, line{
+  stroke-linecap: round;
+}
+.hover{
+  opacity: 1;
+  transform: scale(2);
+}
+
+</style>
+<script>
+//prepare canvas
+var canvas = document.getElementById('canvas');
+
+var xmlns='http://www.w3.org/2000/svg';
+var plot=document.createElementNS(xmlns,'svg');
+var w=canvas.clientWidth, h=canvas.clientHeight;
+plot.id='svg';
+plot.setAttribute('xmlns',xmlns);
+plot.setAttribute('width',w);
+plot.setAttribute('height',h);
+plot.style.transform="translateX(20px)";
+
+document.getElementById('canvas').appendChild(plot);
+console.log(canvas.clientWidth,canvas.clientHeight,plot.width,plot.height)
+
+
+//draw line
+function line(x1,x2,y1,y2,color,width,dash){
+   const line=document.createElementNS(xmlns,'line');
+    line.style.transition='transform 2s'
+    line.setAttribute('x1',x1)
+    line.setAttribute('y1',y1)
+    line.setAttribute('x2',x2)
+    line.setAttribute('y2',y2)
+    line.style.strokeWidth=width;
+    line.style.stroke=color;
+    line.style.strokeDasharray=dash;
+    line.style.strokeLinecap='round';
+    line.style.transform='rotate(225deg)';
+return line
+}
+//draw triangle
+function triangle(midpoint,size,color){
+   const triangle=document.createElementNS(xmlns,'polygon');
+   const x1=midpoint[0]-size/2;//left point
+   const x2=midpoint[0]+size/2;//right point
+   const x3=midpoint[0];//third point
+   const y1=midpoint[1];
+   const y2=midpoint[1];
+   const y3=midpoint[1]+size*Math.sqrt(3)/2;
+   const points=`${x1},${y1} ${x2},${y2} ${x3},${y3}`;
+    triangle.setAttribute('points',points)
+    triangle.style.fill=color;
+    triangle.style.transform='rotate(225deg)';
+return triangle
+}
+//draw circle
+function circle(cx,cy,r,color,width){
+    const point=document.createElementNS(xmlns,'circle');
+    point.setAttribute('cx',cx);
+    point.setAttribute('cy',cy);
+    point.setAttribute('r',r);
+    point.style.stroke=color;
+    point.style.strokeWidth=2;
+    point.style.fill='#f8f4eb';
+return point
+}
+
+
+var alldata={};
+var dataBywhom=[]
+const whomct=document.querySelector('#whom');
+const whyct=document.querySelector('#why');
+const learnedct=document.querySelector('#learned');
+
+function dataloaded(data,name){
+  alldata[name]=data;//store data to object and use them by property name.
+  whomkey.forEach(el=>{
+    var values=alldata.main.filter(e=>{return e.whom==el.id})
+    dataBywhom.push({'whom':el.id,'values':values})
+  })
+  console.log(dataBywhom)
+  dataBywhom.forEach((data,i)=>{
+    var wavecolor=whomkey.find(el=>el.id==data.whom).color;
+    console.log(w/3)
+    var x=w/3*(grid.find(el=>el.id==data.whom).column-1)+25;
+    var y=h/3*(grid.find(el=>el.id==data.whom).row)+50;
+    const group=document.createElementNS(xmlns,'g');
+    group.style.transform=`translate(${x}px,${y}px)`;
+
+    data.values.sort((a,b)=>{return a.type-b.type}).forEach((data,i)=>{
+    var linecolor=typekey.find(el=>el.id==data.type).color;
+    var trianglecolor=learnedkey.find(el=>el.id==data.learned).color;
+    var level=data.level*20;//line length
+    var oftenlevel=howoftenkey.find(el=>el.id==data.howoften).style;//line style
+    var reachlevel=data.reachable;//triangle number
+    const g=document.createElementNS(xmlns,'g');
+    g.style.transform=`translateX(${(i+1)*25}px`;
+
+    g.appendChild(circle(0,0,3,linecolor)); 
+
+    g.appendChild(line(0,0,5,level,linecolor,2,oftenlevel));
+
+    for(var i=0;i<reachlevel;i++){
+      g.appendChild(triangle([0,level+i*10],10,trianglecolor))
+    }
+
+    g.appendChild(line(-5,5,-15,-18,wavecolor,3,'none'))
+    g.appendChild(line(-13,-5,0,-15,wavecolor,3,'none'))
+
+    g.addEventListener('mouseenter', animation);
+    g.addEventListener('mouseleave', animationout);
+    g.style.transition='all 1s';
+    //add description
+    g.addEventListener('mouseenter',()=>{
+      whomct.innerHTML=whomkey.find(el=>el.id==data.whom).whom;
+      whomct.style.color=wavecolor;
+      whyct.innerHTML=typekey.find(el=>el.id==data.type).type;
+      whyct.style.color=linecolor;
+      learnedct.innerHTML=learnedkey.find(el=>el.id==data.learned).learned;
+      learnedct.style.color=trianglecolor;
+    });  
+    
+    group.appendChild(g);
+});
+    document.getElementById('svg').appendChild(group);
+  })
+  
+
+}
+//animiation 
+
+function animation(){
+  // const gs=document.querySelectorAll('g')
+  // gs.forEach(g=>{g.style.opacity=.3})
+  // this.style.opacity=1;
+
+}
+function animationout(){
+  // const gs=document.querySelectorAll('g')
+  // gs.forEach(g=>{g.style.opacity=1})
+}
+
+//get the data
+const files=[{file:'envy.csv',parse:'maindata',name:'main'}];
+function call_user_func(method, params){
+  func = window[method];
+  return func.apply(method, params);
+}
+files.forEach((file)=>{
+  const filepath=file.file;
+  const parsemethod=file.parse;
+  const name=file.name;
+fetch(filepath).then(response=>response.text())//get the whole content of file as text
+.then(text=>{
+  var allTextLines = text.split(/\r\n|\n/);//break whole text to rows
+  var lines = [];
+  var data=[];
+  for (var i=1; i<allTextLines.length; i++) {
+    var row = allTextLines[i].split(',');//break each rows to array
+    data.push(call_user_func(parsemethod,[row]))   
+    };  
+    // console.table(data)
+  dataloaded(data,name);//data-store function
+})
+})
+
+//define your own data as we do in d3 parse function
+function maindata(row){
+  return{      
+        type: +row[0],
+        level: +row[1],
+        whom: +row[2],
+        howoften: +row[3],
+        oftenlevel: +row[4],
+        reachable: +row[5],
+        reachlevel: +row[6],
+        learned: +row[7]
+     }
+}
+//set the keys
+const whomkey=[
+    {id:1,whom:'boyfriend',color:'#9e7cc8'},
+    {id:2,whom:'friend',color:'#f9ab3c'},
+    {id:3,whom:'you',color:'#f69396'},
+    {id:4,whom:'coworker',color:'#e23047'},
+    {id:5,whom:'stranger',color:'#333'},
+    {id:6,whom:'famous person',color:'#999'}
+]
+const howoftenkey=[
+    {id:1,often:'not likely',color:'#494048',style:'1,5'},
+    {id:2,often:'like 1 a week',color:'#4a4b55',style:'5,5'},
+    {id:3,often:'pretty often',color:'#944a34',style:'1,5,5,5'},
+    {id:4,often:'every day',color:'#fc7345',style:'none'}
+]
+const reachablekey=[
+    {id:4,reachable:'easily',color:'#eb4da2'},
+    {id:3,reachable:'yes If I had more willpower\/work harder',color:'#bd3484'},   
+    {id:2,reachable:'Hand, But could be',color:'#4a4b55'},
+    {id:1,reachable:'nope',color:'#494048'}   
+]
+const learnedkey=[
+    {id:1,learned:'Sometimes I don\'t like pants of my job',color:'#e23047'},
+    {id:2,learned:'I am a control freak!',color:'#5c608e'},
+    {id:3,learned:'I am indulgent',color:'#5d507b'},
+    {id:4,learned:'I am black on white',color:'#54b7d9'},
+    {id:5,learned:'there are areas I really need to improve',color:'#f9ab3c'},
+    {id:6,learned:'I don\'t have to \'SAVE\' my coat dresses!! Just wear them!',color:'#eb4da2'}
+]
+const typekey=[
+    {id:1,type:'having less Responsibilities',color:'#e23047'},
+    {id:2,type:'having more free time',color:'#fc7345'},
+    {id:3,type:'having clearer tasks to do',color:'#944a34'},
+    {id:4,type:'be more moderate/stable balanced',color:'#54b7d9'},
+    {id:5,type:'being able to take things easier',color:'#becde6'},
+    {id:6,type:'being less control freak',color:'#5c608e'},
+    {id:7,type:'be healthier(exeracel eat week)',color:'#999'},
+    {id:8,type:'English!! Mastering the languages/accent',color:'#eb4da2'},
+    {id:9,type:'How I look/dress/elegance',color:'#9e7cc8'},
+    {id:10,type:'CHARM!',color:'#333'}
+]
+const grid=[
+    {id:1,row:1,column:1},
+    {id:2,row:1,column:2},
+    {id:3,row:1,column:3},
+    {id:4,row:2,column:1},
+    {id:5,row:2,column:2},
+    {id:6,row:2,column:3},
+]
+
+</script>
+</body>
+
+</html>
