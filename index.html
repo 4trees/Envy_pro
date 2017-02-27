@@ -8,7 +8,7 @@
   <div class="container">
     <div class="title">
       <h2>Envious! <span class="small"> Design by Liuhuaying</span></h2>
-      <p class="des">I envied <span id="whom">someone</span> for <span id="why">a reason</span> and learned that <span id="learned">..</span>.</p>
+      <p class="des">I envied <span id="whom">someone</span> <span id="often">sometimes</span> for <span id="why">a reason</span> and learned that <span id="learned">..</span>.</p><p class="des">Is it within reach for me? <span id="reach">...</span>.</p>
     </div>
     <div id='canvas'></div>
   </div>
@@ -47,129 +47,179 @@ html,body{
 path, line{
   stroke-linecap: round;
 }
-.hover{
-  opacity: 1;
-  transform: scale(2);
-}
 
 </style>
 <script>
 //prepare canvas
 var canvas = document.getElementById('canvas');
 
-var xmlns='http://www.w3.org/2000/svg';
-var plot=document.createElementNS(xmlns,'svg');
-var w=canvas.clientWidth, h=canvas.clientHeight;
-plot.id='svg';
+var xmlns = 'http://www.w3.org/2000/svg';
+var plot = document.createElementNS(xmlns,'svg');
+var w = canvas.clientWidth, h = canvas.clientHeight;
+plot.id = 'svg';
 plot.setAttribute('xmlns',xmlns);
 plot.setAttribute('width',w);
 plot.setAttribute('height',h);
-plot.style.transform="translateX(20px)";
+plot.style.transform = "translateX(20px)";
 
 document.getElementById('canvas').appendChild(plot);
 console.log(canvas.clientWidth,canvas.clientHeight,plot.width,plot.height)
 
 
 //draw line
-function line(x1,x2,y1,y2,color,width,dash){
-   const line=document.createElementNS(xmlns,'line');
-    line.style.transition='transform 2s'
+function line(x1,x2,y1,y2,color,width,dash,opacity){
+   const line = document.createElementNS(xmlns,'line');
+    line.style.transition = 'transform 2s'
     line.setAttribute('x1',x1)
     line.setAttribute('y1',y1)
     line.setAttribute('x2',x2)
     line.setAttribute('y2',y2)
     line.style.strokeWidth=width;
-    line.style.stroke=color;
-    line.style.strokeDasharray=dash;
-    line.style.strokeLinecap='round';
-    line.style.transform='rotate(225deg)';
+    line.style.stroke = color;
+    line.style.strokeDasharray = dash;
+    line.style.strokeLinecap = 'round';
+    line.style.opacity = opacity;
+    line.style.transform = 'rotate(225deg)';
 return line
 }
 //draw triangle
 function triangle(midpoint,size,color){
-   const triangle=document.createElementNS(xmlns,'polygon');
-   const x1=midpoint[0]-size/2;//left point
-   const x2=midpoint[0]+size/2;//right point
-   const x3=midpoint[0];//third point
-   const y1=midpoint[1];
-   const y2=midpoint[1];
-   const y3=midpoint[1]+size*Math.sqrt(3)/2;
-   const points=`${x1},${y1} ${x2},${y2} ${x3},${y3}`;
+    const triangle = document.createElementNS(xmlns,'polygon');
+    const x1 = midpoint[0] - size / 2;//left point
+    const x2 = midpoint[0] + size / 2;//right point
+    const x3 = midpoint[0];//third point
+    const y1 = midpoint[1];
+    const y2 = midpoint[1];
+    const y3 = midpoint[1]+size*Math.sqrt(3)/2;
+    const points = `${x1},${y1} ${x2},${y2} ${x3},${y3}`;
     triangle.setAttribute('points',points)
-    triangle.style.fill=color;
-    triangle.style.transform='rotate(225deg)';
-return triangle
+    triangle.style.fill = color;
+    triangle.style.transform = 'rotate(225deg)';
+return triangle;
 }
 //draw circle
 function circle(cx,cy,r,color,width){
-    const point=document.createElementNS(xmlns,'circle');
+    const point = document.createElementNS(xmlns,'circle');
     point.setAttribute('cx',cx);
     point.setAttribute('cy',cy);
     point.setAttribute('r',r);
-    point.style.stroke=color;
-    point.style.strokeWidth=2;
-    point.style.fill='#f8f4eb';
-return point
+    point.style.stroke = color;
+    point.style.strokeWidth = 2;
+    point.style.fill = '#f8f4eb';
+return point;
+}
+//add texttag
+function texttag(content,x,y,color,size,groupName){
+    const text = document.createElementNS(xmlns,'text');
+    text.innerHTML = content;
+    text.setAttribute('x',x)
+    text.setAttribute('y',y)
+    text.style.fill = color;
+    text.style.fontSize = size;
+    text.style.textAnchor = "middle";
+    text.style.opacity = 0;
+    text.setAttribute('data-groupname',groupName);
+    text.setAttribute('data-name','grouptag');
+return text;
+}
+//add wave
+function wave(startPointX,startPointY,waveNumber,length,width,color,groupName){
+  let eachLength = length / waveNumber;
+  let offsetY = 8;
+  let waves = []
+  for(var n=0;n<waveNumber*2;n++){
+    let wavePath = `L${startPointX + eachLength / 2 * (n+1)} ${startPointY - offsetY * (n%2-1)} `;
+    waves.push(wavePath);
+  }
+  let d = 'M ' + startPointX + ' ' + startPointY + ' '.concat(...waves);
+  const wave = document.createElementNS(xmlns,'path');
+  wave.setAttribute("d", d);
+  wave.setAttribute('stroke',color);
+  wave.setAttribute('fill','none')
+  wave.setAttribute('stroke-width',width+'px')
+  wave.style.strokeLinecap = 'round';
+  wave.setAttribute('data-groupname',groupName);
+  wave.setAttribute('data-name','wave');
+return wave;
 }
 
-
-var alldata={};
-var dataBywhom=[]
-const whomct=document.querySelector('#whom');
-const whyct=document.querySelector('#why');
-const learnedct=document.querySelector('#learned');
+var alldata = {};
+var dataBywhom = []
+const whomct = document.querySelector('#whom');
+const whyct = document.querySelector('#why');
+const learnedct = document.querySelector('#learned');
+const oftenct = document.querySelector('#often');
+const reachct = document.querySelector('#reach');
 
 function dataloaded(data,name){
-  alldata[name]=data;//store data to object and use them by property name.
+  alldata[name] = data;//store data to object and use them by property name.
+  //nest data by whom
   whomkey.forEach(el=>{
-    var values=alldata.main.filter(e=>{return e.whom==el.id})
+    var values = alldata.main.filter(e=>{return e.whom == el.id})
     dataBywhom.push({'whom':el.id,'values':values})
   })
-  console.log(dataBywhom)
-  dataBywhom.forEach((data,i)=>{
-    var wavecolor=whomkey.find(el=>el.id==data.whom).color;
-    console.log(w/3)
-    var x=w/3*(grid.find(el=>el.id==data.whom).column-1)+25;
-    var y=h/3*(grid.find(el=>el.id==data.whom).row)+50;
-    const group=document.createElementNS(xmlns,'g');
+  //draw group by whom
+  dataBywhom.forEach((data,n)=>{
+    var waveColor = whomkey.find(el=>el.id == data.whom).color;//wave line color
+    var whomText = whomkey.find(el=>el.id == data.whom).whom;//group tag
+    var x = w / 3 * (grid.find(el=>el.id == data.whom).column - 1) + 25;//group x
+    var y = h / 3 * (grid.find(el=>el.id == data.whom).row) + 50;//group y
+    const gapBetweenElement = 25;
+    const group = document.createElementNS(xmlns,'g');
     group.style.transform=`translate(${x}px,${y}px)`;
 
+    //draw within group 
     data.values.sort((a,b)=>{return a.type-b.type}).forEach((data,i)=>{
-    var linecolor=typekey.find(el=>el.id==data.type).color;
-    var trianglecolor=learnedkey.find(el=>el.id==data.learned).color;
-    var level=data.level*20;//line length
-    var oftenlevel=howoftenkey.find(el=>el.id==data.howoften).style;//line style
-    var reachlevel=data.reachable;//triangle number
-    const g=document.createElementNS(xmlns,'g');
-    g.style.transform=`translateX(${(i+1)*25}px`;
+      var lineColor=typekey.find(el=>el.id==data.type).color;
+      var triangleColor = learnedkey.find(el=>el.id == data.learned).color;
+      var level = data.level * 20;//line length
+      var oftenLevel = howoftenkey.find(el=>el.id == data.howoften).style;//line style
+      var reachLevel = data.reachable;//triangle number
+      const g = document.createElementNS(xmlns,'g');
+      g.style.transform = `translateX(${(i + 1) * gapBetweenElement}px`;
+      const innerg = document.createElementNS(xmlns,'g');
+      innerg.setAttribute('data-name','innerg')
+      innerg.setAttribute('data-groupname',data.whom)
+      innerg.setAttribute('data-num',`${data.whom}-${i}`)
+      g.appendChild(innerg)
 
-    g.appendChild(circle(0,0,3,linecolor)); 
+      //append circle
+      innerg.appendChild(circle(0,0,3,lineColor)); 
+      //append line
+      innerg.appendChild(line(0,0,5,level,lineColor,2,oftenLevel,1));
+      innerg.appendChild(line(0,0,5,level,lineColor,20,oftenLevel,0));//for more spaece to mouseenter
+      //append arrows
+      for(var i=0;i<reachLevel;i++){
+        innerg.appendChild(triangle([0,level+i*10],10,triangleColor))
+      }
+      //add animation for each element
+      innerg.addEventListener('mouseover', animation);
+      innerg.addEventListener('mouseout', animationout);
+      innerg.style.transition = 'all 1s';
+      //add description event
+      console.log(circle(0,0,3,lineColor))
+      g.addEventListener('mouseenter',()=>{
+        whomct.innerHTML = whomkey.find(el=>el.id == data.whom).whom;
+        whomct.style.color = waveColor;
+        whyct.innerHTML = typekey.find(el=>el.id == data.type).type;
+        whyct.style.color = lineColor;
+        learnedct.innerHTML = learnedkey.find(el=>el.id == data.learned).learned;
+        learnedct.style.color = triangleColor;
+        oftenct.innerHTML = howoftenkey.find(el=>el.id == data.howoften).often;
+        reachct.innerHTML = reachablekey.find(el=>el.id == data.reachable).reachable;
+      });  
+      
+      group.appendChild(g);
+    });
+    //add wave
+    let waveLength = gapBetweenElement * data.values.length;
+    group.appendChild(wave(10,10,data.values.length,waveLength,2,waveColor,data.whom));
 
-    g.appendChild(line(0,0,5,level,linecolor,2,oftenlevel));
+    //add group name
+    group.appendChild(texttag(whomText,waveLength / 2 + 10,35,waveColor,'.8em',data.whom))
 
-    for(var i=0;i<reachlevel;i++){
-      g.appendChild(triangle([0,level+i*10],10,trianglecolor))
-    }
-
-    g.appendChild(line(-5,5,-15,-18,wavecolor,3,'none'))
-    g.appendChild(line(-13,-5,0,-15,wavecolor,3,'none'))
-
-    g.addEventListener('mouseenter', animation);
-    g.addEventListener('mouseleave', animationout);
-    g.style.transition='all 1s';
-    //add description
-    g.addEventListener('mouseenter',()=>{
-      whomct.innerHTML=whomkey.find(el=>el.id==data.whom).whom;
-      whomct.style.color=wavecolor;
-      whyct.innerHTML=typekey.find(el=>el.id==data.type).type;
-      whyct.style.color=linecolor;
-      learnedct.innerHTML=learnedkey.find(el=>el.id==data.learned).learned;
-      learnedct.style.color=trianglecolor;
-    });  
-    
-    group.appendChild(g);
-});
     document.getElementById('svg').appendChild(group);
+ 
   })
   
 
@@ -177,18 +227,28 @@ function dataloaded(data,name){
 //animiation 
 
 function animation(){
-  // const gs=document.querySelectorAll('g')
-  // gs.forEach(g=>{g.style.opacity=.3})
-  // this.style.opacity=1;
+  const innergs = document.querySelectorAll('[data-groupname]')
+  innergs.forEach(el=>{
+    if(el.dataset.groupname == this.dataset.groupname && (el.dataset.name == 'grouptag' || el.dataset.name == 'wave')){
+      el.style.opacity = 1;
+    }
+    if((el.dataset.num && el.dataset.num !== this.dataset.num) || (el.dataset.groupname != this.dataset.groupname && el.dataset.name == 'wave')){
+      el.style.opacity =  .3;
+    }
+    el.style.transform = el.dataset.num == this.dataset.num ? 'scale(1.3)' : 'scale(1)'
+  })
 
 }
 function animationout(){
-  // const gs=document.querySelectorAll('g')
-  // gs.forEach(g=>{g.style.opacity=1})
+  const innergs = document.querySelectorAll('[data-groupname]')
+  innergs.forEach(el=>{
+    el.style.opacity = el.dataset.name == 'grouptag' ? 0 : 1 ;
+    el.style.transform = 'scale(1)';
+  })
 }
 
 //get the data
-const files=[{file:'envy.csv',parse:'maindata',name:'main'}];
+const files = [{file:'envy.csv',parse:'maindata',name:'main'}];
 function call_user_func(method, params){
   func = window[method];
   return func.apply(method, params);
@@ -201,7 +261,7 @@ fetch(filepath).then(response=>response.text())//get the whole content of file a
 .then(text=>{
   var allTextLines = text.split(/\r\n|\n/);//break whole text to rows
   var lines = [];
-  var data=[];
+  var data = [];
   for (var i=1; i<allTextLines.length; i++) {
     var row = allTextLines[i].split(',');//break each rows to array
     data.push(call_user_func(parsemethod,[row]))   
@@ -218,42 +278,42 @@ function maindata(row){
         level: +row[1],
         whom: +row[2],
         howoften: +row[3],
-        oftenlevel: +row[4],
+        oftenLevel: +row[4],
         reachable: +row[5],
-        reachlevel: +row[6],
+        reachLevel: +row[6],
         learned: +row[7]
      }
 }
 //set the keys
-const whomkey=[
+const whomkey = [
     {id:1,whom:'boyfriend',color:'#9e7cc8'},
     {id:2,whom:'friend',color:'#f9ab3c'},
-    {id:3,whom:'you',color:'#f69396'},
+    {id:3,whom:'Stefanie',color:'#f69396'},
     {id:4,whom:'coworker',color:'#e23047'},
     {id:5,whom:'stranger',color:'#333'},
     {id:6,whom:'famous person',color:'#999'}
 ]
-const howoftenkey=[
+const howoftenkey = [
     {id:1,often:'not likely',color:'#494048',style:'1,5'},
-    {id:2,often:'like 1 a week',color:'#4a4b55',style:'5,5'},
+    {id:2,often:'like once a week',color:'#4a4b55',style:'5,5'},
     {id:3,often:'pretty often',color:'#944a34',style:'1,5,5,5'},
     {id:4,often:'every day',color:'#fc7345',style:'none'}
 ]
-const reachablekey=[
-    {id:4,reachable:'easily',color:'#eb4da2'},
-    {id:3,reachable:'yes If I had more willpower\/work harder',color:'#bd3484'},   
+const reachablekey = [
+    {id:4,reachable:'Easily',color:'#eb4da2'},
+    {id:3,reachable:'Yes,if I had more willpower\/work harder',color:'#bd3484'},   
     {id:2,reachable:'Hand, But could be',color:'#4a4b55'},
-    {id:1,reachable:'nope',color:'#494048'}   
+    {id:1,reachable:'Nope',color:'#494048'}   
 ]
-const learnedkey=[
-    {id:1,learned:'Sometimes I don\'t like pants of my job',color:'#e23047'},
+const learnedkey = [
+    {id:1,learned:'sometimes I don\'t like pants of my job',color:'#e23047'},
     {id:2,learned:'I am a control freak!',color:'#5c608e'},
     {id:3,learned:'I am indulgent',color:'#5d507b'},
     {id:4,learned:'I am black on white',color:'#54b7d9'},
     {id:5,learned:'there are areas I really need to improve',color:'#f9ab3c'},
     {id:6,learned:'I don\'t have to \'SAVE\' my coat dresses!! Just wear them!',color:'#eb4da2'}
 ]
-const typekey=[
+const typekey = [
     {id:1,type:'having less Responsibilities',color:'#e23047'},
     {id:2,type:'having more free time',color:'#fc7345'},
     {id:3,type:'having clearer tasks to do',color:'#944a34'},
@@ -265,7 +325,7 @@ const typekey=[
     {id:9,type:'How I look/dress/elegance',color:'#9e7cc8'},
     {id:10,type:'CHARM!',color:'#333'}
 ]
-const grid=[
+const grid = [
     {id:1,row:1,column:1},
     {id:2,row:1,column:2},
     {id:3,row:1,column:3},
