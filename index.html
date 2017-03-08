@@ -2,15 +2,24 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Week33 Envious!</title>
+  <title>Envious!</title>
+  <script type="text/javascript" src="data.js"></script>
 </head>
 <body>
   <div class="container">
     <div class="title">
       <h2>Envious! <span class="small"> Design by Liuhuaying</span></h2>
-      <p class="des">I envied <span id="whom">someone</span> <span id="often">sometimes</span> for <span id="why">a reason</span> and learned that <span id="learned">..</span>.</p><p class="des">Is it within reach for me? <span id="reach">...</span>.</p>
+      <div id='des'>
+        <p class="des">I envied <span id="whom">someone</span> <span id="often">sometimes</span> for <span id="why">a reason</span> and learned that <span id="learned">..</span>.</p>
+        <p class="des">Is it within reach for me? <span id="reach">...</span>.</p>
+      </div>
     </div>
+    <div id='sample'></div>
     <div id='canvas'></div>
+    <div id="legend">
+      <div id='button'><button type="button" onclick="explain()">EXPLAIN ME</button></div>
+      <div id="keys"></div>
+    </div>
   </div>
 <style>
 html{
@@ -22,50 +31,458 @@ html,body{
   height: 100%;
   margin: 0;
 }
+path, line{
+  stroke-linecap: round;
+}
+p{
+  word-wrap: break-word; 
+  word-break: normal; 
+}
 .container{
   width: 100%;
   margin: 0 auto;
   height: 100%;
+  top:0;
 }
-#canvas{
+#canvas,#sample{
   width: 100%;
-  height: 80%;
+  height: 65%;
   margin: 0;
 }
-.title{
-  height: 15%;
+#legend{
   width: 100%;
-  padding-left: 2em;
+  height: 13%;
+  margin: 0;
+}
+#button{
+  padding-left: 2.4em;
+  padding-top: 1.8em;
+  float: left;
+}
+#button button{
+  color: #666;
+  background-color: #f8f4eb;
+  border: 1px solid #666;
+  box-shadow: 1px 1px 1px #ccc;
+  padding: 5px 10px;
+}
+#keys{
+  float: left;
+  width: 80%;
+}
+.title{
+  height: 20%;
+  padding-left: 1.8em;
 }
 .small{
   font-size: 50%;
   font-weight: 200;
 }
+#des{
+  font-size: 85%;
+}
 .des{
   color: #666;
 }
-path, line{
-  stroke-linecap: round;
+.hidden{
+  display: none;
+  /*visibility: hidden;*/
+/*  height: 0;
+  opacity: 0;
+  overflow: hidden;*/
+}
+
+/* animation */
+#des, #sample, #canvas, #legend{
+  /*transition: opacity 1s linear;*/
+}
+.movewave{
+  stroke-dasharray: 300;
+  stroke-dashoffset: 300;
+  animation: wave 2s linear forwards;
+}
+@keyframes wave {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+.movecircle{
+  stroke-dasharray: 30;
+  stroke-dashoffset: 30;
+  animation: cir 1s linear forwards;
+}
+@keyframes cir {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+.moveline{
+  stroke-dasharray: 500;
+  stroke-dashoffset: 500;
+  animation: lines 3s linear forwards;
+}
+@keyframes lines {
+  to {
+    stroke-dasharray: 500;
+    stroke-dashoffset: 0;
+  }
 }
 
 </style>
 <script>
 //prepare canvas
-var canvas = document.getElementById('canvas');
-
+var canvas = document.getElementById('canvas'),//main data
+    samples = document.getElementById('sample'),//example
+    legends = document.getElementById('legend'),//legend on the bottom(including button)
+    keys = document.getElementById('keys'),//keys in legend
+    desriptions = document.getElementById('des');//text on the top
+    console.log(desriptions)
 var xmlns = 'http://www.w3.org/2000/svg';
-var plot = document.createElementNS(xmlns,'svg');
 var w = canvas.clientWidth, h = canvas.clientHeight;
-plot.id = 'svg';
-plot.setAttribute('xmlns',xmlns);
-plot.setAttribute('width',w);
-plot.setAttribute('height',h);
-plot.style.transform = "translateX(20px)";
+var keyw = legends.clientWidth,keyh = legends.clientHeight;
+var mainPlot = plot('mainplot',w,h), //for main data
+    samplePlot = plot('sampleplot',w,h), // for example
+    keysPlot =  plot('keysplot',keyw,keyh)
+canvas.appendChild(mainPlot);
+samples.appendChild(samplePlot);
+keys.appendChild(keysPlot)
+console.log(canvas.clientWidth,canvas.clientHeight,mainPlot.width,mainPlot.height)
+//flag: if playing the explanation
+var playing;
 
-document.getElementById('canvas').appendChild(plot);
-console.log(canvas.clientWidth,canvas.clientHeight,plot.width,plot.height)
+//text container
+const whomct = document.querySelector('#whom');
+const whyct = document.querySelector('#why');
+const learnedct = document.querySelector('#learned');
+const oftenct = document.querySelector('#often');
+const reachct = document.querySelector('#reach');
+
+//nest data by whom
+var dataBywhom = []
+whomkey.forEach(el=>{
+  var values = maindata.filter(e=>{return e.whom == el.id})
+  dataBywhom.push({'whom':el.id,'values':values})
+})
+
+//initial
+playing = true;
+// showsample()
+showall(dataBywhom)
+legend()
+toggle()
+function toggle(){
+  if(playing){
+    desriptions.classList.add('hidden')
+    canvas.classList.add('hidden');
+    legends.classList.add('hidden');
+    samples.classList.remove('hidden')
+    showsample()
+    playing = false;
+  }else{
+    samples.classList.add('hidden')
+    desriptions.classList.remove('hidden')
+    canvas.classList.remove('hidden');
+    legends.classList.remove('hidden');
+
+    // playing = true;
+  }
+}
+// click explain me button
+function explain(){
+  playing = true;
+  toggle();
+}
+// sample
+function showsample(){
+    //prepare to show
+    const sample = document.createElementNS(xmlns,'g');
+          sample.style.transform = `translate(${w/5*2}px,${h/2}px)`;
+    const sampleWaveColor = whomkey.find(el=>el.id == 3).color;
+    const sampleLineColor = typekey.find(el=>el.id == 8).color;
+    const sampleTriColor = learnedkey.find(el=>el.id == 5).color;
+    const sampleLineStyle = null;
+    //text
+    const sampleCT = texttag('I envied!',w/2,h/8,'#666','1.2em',1,'sample','sample');         
+    //animation
+    setTimeout(()=>{
+      sampleWave = wave(10 - 25,10,7,25 * 7,2,sampleWaveColor,3);
+      sample.appendChild(sampleWave);
+      sampleWave.classList.add('movewave');
+    },1000)
+    setTimeout(()=>{
+      // sampleCT.innerHTML = whomkey.find(el=>el.id == 3).whom;
+      sampleCT.innerHTML = 'Someone!'
+      sampleCT.style.fill = sampleWaveColor;
+    },1100)
+
+    setTimeout(()=>{
+      sampleCircle = circle(0,0,3,sampleLineColor)
+      sample.appendChild(sampleCircle);
+      sampleCircle.classList.add('movecircle')
+    },3000)
+    setTimeout(()=>{
+      // sampleCT.innerHTML = typekey.find(el=>el.id == 8).type;
+      sampleCT.innerHTML = 'For a thing!'
+      sampleCT.style.fill = sampleLineColor;
+    },3000)
+
+    setTimeout(()=>{
+      sampleLine = line(0,0,5,8 * 20,sampleLineColor,2,sampleLineStyle,1);
+      sample.appendChild(sampleLine);
+      sampleLine.classList.add('moveline')
+    },4000)
+    setTimeout(()=>{
+      // sampleCT.innerHTML = howoftenkey.find(el=>el.id == 4).often;
+      sampleCT.innerHTML = 'So often!'
+      sampleCT.style.fill = '#666';
+    },4000)
+
+    setTimeout(()=>{
+      let i = 0;
+      let trianges = setInterval(function () {
+          sample.appendChild(triangle([0,8 * 20 + i * 10],10,sampleTriColor))
+          if (++i == 3) {
+             window.clearInterval(trianges);
+          }
+      }, 300);    
+    },5000)       
+    setTimeout(()=>{
+      // sampleCT.innerHTML = reachablekey.find(el=>el.id == 3).reachable + learnedkey.find(el=>el.id == 5).learned;
+      sampleCT.innerHTML = 'It\'s reachable! I learned something!';
+      sampleCT.style.fill = sampleTriColor;
+    },5000)
+    
+    samplePlot.appendChild(sampleCT)
+    samplePlot.appendChild(sample)
+    setTimeout(()=>{
+      sample.remove();
+      sampleCT.remove();
+      toggle()
+    },7500)
+}
+
+function showall(dataBywhom){
+  //draw group by whom
+  dataBywhom.forEach((data,n)=>{
+    var waveColor = whomkey.find(el=>el.id == data.whom).color;//wave line color
+    var whomText = whomkey.find(el=>el.id == data.whom).whom;//group tag
+    var x = w / 3 * (grid.find(el=>el.id == data.whom).column - 1) + 25;//group x
+    var y = grid.find(el=>el.id == data.whom).row % 2 ? h / 3 + 25 : h / 5 * 4 + 20;//group y
+    const gapBetweenElement = 25;
+    const group = document.createElementNS(xmlns,'g');
+    group.style.transform=`translate(${x}px,${y}px)`;
+
+    //draw within group 
+    data.values.sort((a,b)=>{return a.type-b.type}).forEach((data,i)=>{
+      var lineColor=typekey.find(el=>el.id==data.type).color;
+      var triangleColor = learnedkey.find(el=>el.id == data.learned).color;
+      var level = data.level * 20;//line length
+      var oftenLevel = howoftenkey.find(el=>el.id == data.howoften).style;//line style
+      var reachLevel = data.reachable;//triangle number
+      const g = document.createElementNS(xmlns,'g');
+      g.style.transform = `translateX(${(i + 1) * gapBetweenElement}px)`;
+      const innerg = document.createElementNS(xmlns,'g');
+      innerg.setAttribute('data-name','innerg')
+      innerg.setAttribute('data-groupname',data.whom)
+      innerg.setAttribute('data-num',`${data.whom}-${i}`)
+      g.appendChild(innerg)
+
+      //append circle
+      innerg.appendChild(circle(0,0,3,lineColor)); 
+      //append line
+      innerg.appendChild(line(0,0,5,level,lineColor,2,oftenLevel,1));
+      innerg.appendChild(line(0,0,5,level,lineColor,20,oftenLevel,0));//for more spaece to mouseenter
+      //append arrows
+      for(var i=0;i<reachLevel;i++){
+        innerg.appendChild(triangle([0, level + i * 10],10,triangleColor))
+      }
+      //add animation for each element
+      innerg.addEventListener('mouseover', animation);
+      innerg.addEventListener('mouseout', animationout);
+      innerg.style.transition = 'all 1s';
+      //add description event
+      g.addEventListener('mouseenter',()=>{
+        whomct.innerHTML = whomkey.find(el=>el.id == data.whom).whom;
+        whomct.style.color = waveColor;
+        whyct.innerHTML = typekey.find(el=>el.id == data.type).type;
+        whyct.style.color = lineColor;
+        learnedct.innerHTML = learnedkey.find(el=>el.id == data.learned).learned;
+        learnedct.style.color = triangleColor;
+        oftenct.innerHTML = howoftenkey.find(el=>el.id == data.howoften).often;
+        reachct.innerHTML = reachablekey.find(el=>el.id == data.reachable).reachable;
+      });        
+      group.appendChild(g);
+    });
+    //add wave
+    let waveLength = gapBetweenElement * data.values.length;
+    group.appendChild(wave(10,10,data.values.length,waveLength,2,waveColor,data.whom));
+
+    //add group name
+    group.appendChild(texttag(whomText,waveLength / 2 + 10,35,waveColor,'.8em',0,data.whom,'grouptag'))
+
+    mainPlot.appendChild(group);
+   
+  })
+}
+// legend
+function legend(){
+  const keyGroup = document.createElementNS(xmlns,'g')
+  for(var i=0;i<6;i++){
+    const key = document.createElementNS(xmlns,'g')
+    var keyx = keyw / 4 * (grid.find(el=>el.id == i+1).column-1)+50;//group x
+    var keyy = keyh / 3 * (grid.find(el=>el.id == i+1).row);//group y
+    const iconLength = 35;
+    const gap = 10;
+    key.style.transform = `translate(${keyx}px,${keyy}px)`;
+
+    var icon,name;
+    switch(i){
+      case 0:
+        icon = wave(0,-4,3,iconLength,1.5,'#9e7cc8','keys')//wave(startPointX,startPointY,waveNumber,length,width,color,groupName)
+        name = texttag('Whom I envied',iconLength + gap,0,'#666','.6em',1,'keys','whomIEnvied');
+        break;
+      case 1:
+        icon = line(0,iconLength,0,0,'#333',2,'1',1);//line(x1,x2,y1,y2,color,width,dash,opacity)
+        icon.style.transform = 'rotate(0deg)';
+        name = texttag('How often this happend',iconLength + gap,0,'#666','.6em',1,'keys','howOften');
+        break;
+      case 2:
+        icon = document.createElementNS(xmlns,'g')
+        for(var n=0;n<4;n++){
+          var tri = triangle([0,n * 10],10,'#333')//triangle(midpoint,size,color)
+          tri.style.transform = 'rotate(270deg)';
+          icon.appendChild(tri)
+        }
+        name = texttag('How reachable is this thing',iconLength + gap,0,'#666','.6em',1,'keys','howReachable');
+        break;
+      case 3:
+        icon = circle(iconLength/2,0,3.5,'#e23047',2)//circle(cx,cy,r,color,width)
+        name = texttag('What kind of envy',iconLength + gap,0,'#666','.6em',1,'keys','Kinds');
+        break;
+      case 4:
+        icon = line(0,iconLength,0,0,'#333',2,'null',1);//line(x1,x2,y1,y2,color,width,dash,opacity)
+        icon.style.transform = 'rotate(0deg)';
+        name = texttag('Level of the envy of feeling',iconLength + gap,0,'#666','.6em',1,'keys','LevelOfFeeling');
+        break;
+      case 5:
+        icon = triangle([0,10+5],10,'#e23047')
+        icon.style.transform = 'rotate(270deg)';
+        name = texttag('What I learned',iconLength + gap,0,'#666','.6em',1,'keys','Learn');
+        break;
+    }
+    name.style.textAnchor = "start";
+    icon.setAttribute('data-key',`legend${i+1}`);
+    key.appendChild(icon)
+    key.appendChild(name)
+    keyGroup.appendChild(key)
+  }
+  
+  keysPlot.appendChild(keyGroup)
+  //animation
+  const keyn = document.querySelectorAll('[data-key]');
+  keyn.forEach(key=>{
+    switch(key.dataset.key){
+      case 'legend1':
+        let legend1 = 1;
+        setInterval(()=>{
+          key.style.stroke = whomkey.find(el=>el.id == legend1).color;
+          if (++legend1 > whomkey.length){
+            legend1 = 1;
+          }
+        },1000)
+        break;
+      case 'legend2':
+        let legend2 = 1;
+        setInterval(()=>{
+          key.style.strokeDasharray = howoftenkey.find(el=>el.id == legend2).style;
+          if (++legend2 > howoftenkey.length){
+            legend2 = 1;
+          }
+        },1000)
+        break;
+      case 'legend3':
+        const tris = key.querySelectorAll('polygon');
+        let legend3 = 0;
+        setInterval(()=>{
+          tris.forEach((tri,i)=>{
+            if(i <= legend3){
+              tri.style.fill = '#333';
+            }else{
+              tri.style.fill = '#f8f4eb';
+            }
+            
+          })
+          // tris[legend3].style.fill = '#333';
+          if (++legend3 > 3){
+            legend3 = 0;
+          }
+        },1000)
+        break;
+      case 'legend4':
+        let legend4 = 1;
+        setInterval(()=>{
+          key.style.stroke = typekey.find(el=>el.id==legend4).color;
+          if (++legend4 > typekey.length){
+            legend4 = 1;
+          }
+        },1000)
+        break;
+      case 'legend5':
+          key.classList.add('moveline')
+          key.style.animationIterationCount = 'infinite'
+        break;
+      case 'legend6':
+        let legend6 = 1;
+        setInterval(()=>{
+          key.style.fill = learnedkey.find(el=>el.id==legend6).color;
+          if (++legend6 > learnedkey.length){
+            legend6 = 1;
+          }
+        },1000)
+        break;
+    }
+
+  })
+  const key1 = document.querySelector('[data-key=legend1]')
+  const key2 = document.querySelector('[data-key=legend2]')
+
+  const key4 = document.querySelector('[data-key=legend4]')
 
 
+}
+
+//animiation 
+function animation(){
+  const innergs = document.querySelectorAll('[data-groupname]')
+  innergs.forEach(el=>{
+    if(el.dataset.groupname == this.dataset.groupname && (el.dataset.name == 'grouptag' || el.dataset.name == 'wave')){
+      el.style.opacity = 1;
+    }
+    if((el.dataset.num && el.dataset.num !== this.dataset.num) || (el.dataset.groupname != this.dataset.groupname && el.dataset.name == 'wave')){
+      el.style.opacity =  .3;
+    }
+    el.style.transform = el.dataset.num == this.dataset.num ? 'scale(1.3)' : 'scale(1)'
+  })
+
+}
+function animationout(){
+  const innergs = document.querySelectorAll('[data-groupname]')
+  innergs.forEach(el=>{
+    el.style.opacity = el.dataset.name == 'grouptag' ? 0 : 1 ;
+    el.style.transform = 'scale(1)';
+  })
+}
+
+// create svg
+function plot(id,w,h){
+  const plot = document.createElementNS(xmlns,'svg');
+  plot.id = id;
+  plot.setAttribute('xmlns',xmlns);
+  plot.setAttribute('width',w);
+  plot.setAttribute('height',h);
+  plot.style.transform = "translateX(20px)";
+return plot
+}
 //draw line
 function line(x1,x2,y1,y2,color,width,dash,opacity){
    const line = document.createElementNS(xmlns,'line');
@@ -109,7 +526,7 @@ function circle(cx,cy,r,color,width){
 return point;
 }
 //add texttag
-function texttag(content,x,y,color,size,groupName){
+function texttag(content,x,y,color,size,opacity,groupName,dataName){
     const text = document.createElementNS(xmlns,'text');
     text.innerHTML = content;
     text.setAttribute('x',x)
@@ -117,11 +534,13 @@ function texttag(content,x,y,color,size,groupName){
     text.style.fill = color;
     text.style.fontSize = size;
     text.style.textAnchor = "middle";
-    text.style.opacity = 0;
+    text.style.opacity = opacity;
     text.setAttribute('data-groupname',groupName);
-    text.setAttribute('data-name','grouptag');
+    text.setAttribute('data-name',dataName);
+    text.style.alignmentBaseline="central"
 return text;
 }
+
 //add wave
 function wave(startPointX,startPointY,waveNumber,length,width,color,groupName){
   let eachLength = length / waveNumber;
@@ -143,196 +562,6 @@ function wave(startPointX,startPointY,waveNumber,length,width,color,groupName){
 return wave;
 }
 
-var alldata = {};
-var dataBywhom = []
-const whomct = document.querySelector('#whom');
-const whyct = document.querySelector('#why');
-const learnedct = document.querySelector('#learned');
-const oftenct = document.querySelector('#often');
-const reachct = document.querySelector('#reach');
-
-function dataloaded(data,name){
-  alldata[name] = data;//store data to object and use them by property name.
-  //nest data by whom
-  whomkey.forEach(el=>{
-    var values = alldata.main.filter(e=>{return e.whom == el.id})
-    dataBywhom.push({'whom':el.id,'values':values})
-  })
-  //draw group by whom
-  dataBywhom.forEach((data,n)=>{
-    var waveColor = whomkey.find(el=>el.id == data.whom).color;//wave line color
-    var whomText = whomkey.find(el=>el.id == data.whom).whom;//group tag
-    var x = w / 3 * (grid.find(el=>el.id == data.whom).column - 1) + 25;//group x
-    var y = h / 3 * (grid.find(el=>el.id == data.whom).row) + 50;//group y
-    const gapBetweenElement = 25;
-    const group = document.createElementNS(xmlns,'g');
-    group.style.transform=`translate(${x}px,${y}px)`;
-
-    //draw within group 
-    data.values.sort((a,b)=>{return a.type-b.type}).forEach((data,i)=>{
-      var lineColor=typekey.find(el=>el.id==data.type).color;
-      var triangleColor = learnedkey.find(el=>el.id == data.learned).color;
-      var level = data.level * 20;//line length
-      var oftenLevel = howoftenkey.find(el=>el.id == data.howoften).style;//line style
-      var reachLevel = data.reachable;//triangle number
-      const g = document.createElementNS(xmlns,'g');
-      g.style.transform = `translateX(${(i + 1) * gapBetweenElement}px`;
-      const innerg = document.createElementNS(xmlns,'g');
-      innerg.setAttribute('data-name','innerg')
-      innerg.setAttribute('data-groupname',data.whom)
-      innerg.setAttribute('data-num',`${data.whom}-${i}`)
-      g.appendChild(innerg)
-
-      //append circle
-      innerg.appendChild(circle(0,0,3,lineColor)); 
-      //append line
-      innerg.appendChild(line(0,0,5,level,lineColor,2,oftenLevel,1));
-      innerg.appendChild(line(0,0,5,level,lineColor,20,oftenLevel,0));//for more spaece to mouseenter
-      //append arrows
-      for(var i=0;i<reachLevel;i++){
-        innerg.appendChild(triangle([0,level+i*10],10,triangleColor))
-      }
-      //add animation for each element
-      innerg.addEventListener('mouseover', animation);
-      innerg.addEventListener('mouseout', animationout);
-      innerg.style.transition = 'all 1s';
-      //add description event
-      console.log(circle(0,0,3,lineColor))
-      g.addEventListener('mouseenter',()=>{
-        whomct.innerHTML = whomkey.find(el=>el.id == data.whom).whom;
-        whomct.style.color = waveColor;
-        whyct.innerHTML = typekey.find(el=>el.id == data.type).type;
-        whyct.style.color = lineColor;
-        learnedct.innerHTML = learnedkey.find(el=>el.id == data.learned).learned;
-        learnedct.style.color = triangleColor;
-        oftenct.innerHTML = howoftenkey.find(el=>el.id == data.howoften).often;
-        reachct.innerHTML = reachablekey.find(el=>el.id == data.reachable).reachable;
-      });  
-      
-      group.appendChild(g);
-    });
-    //add wave
-    let waveLength = gapBetweenElement * data.values.length;
-    group.appendChild(wave(10,10,data.values.length,waveLength,2,waveColor,data.whom));
-
-    //add group name
-    group.appendChild(texttag(whomText,waveLength / 2 + 10,35,waveColor,'.8em',data.whom))
-
-    document.getElementById('svg').appendChild(group);
- 
-  })
-  
-
-}
-//animiation 
-
-function animation(){
-  const innergs = document.querySelectorAll('[data-groupname]')
-  innergs.forEach(el=>{
-    if(el.dataset.groupname == this.dataset.groupname && (el.dataset.name == 'grouptag' || el.dataset.name == 'wave')){
-      el.style.opacity = 1;
-    }
-    if((el.dataset.num && el.dataset.num !== this.dataset.num) || (el.dataset.groupname != this.dataset.groupname && el.dataset.name == 'wave')){
-      el.style.opacity =  .3;
-    }
-    el.style.transform = el.dataset.num == this.dataset.num ? 'scale(1.3)' : 'scale(1)'
-  })
-
-}
-function animationout(){
-  const innergs = document.querySelectorAll('[data-groupname]')
-  innergs.forEach(el=>{
-    el.style.opacity = el.dataset.name == 'grouptag' ? 0 : 1 ;
-    el.style.transform = 'scale(1)';
-  })
-}
-
-//get the data
-const files = [{file:'envy.csv',parse:'maindata',name:'main'}];
-function call_user_func(method, params){
-  func = window[method];
-  return func.apply(method, params);
-}
-files.forEach((file)=>{
-  const filepath=file.file;
-  const parsemethod=file.parse;
-  const name=file.name;
-fetch(filepath).then(response=>response.text())//get the whole content of file as text
-.then(text=>{
-  var allTextLines = text.split(/\r\n|\n/);//break whole text to rows
-  var lines = [];
-  var data = [];
-  for (var i=1; i<allTextLines.length; i++) {
-    var row = allTextLines[i].split(',');//break each rows to array
-    data.push(call_user_func(parsemethod,[row]))   
-    };  
-    // console.table(data)
-  dataloaded(data,name);//data-store function
-})
-})
-
-//define your own data as we do in d3 parse function
-function maindata(row){
-  return{      
-        type: +row[0],
-        level: +row[1],
-        whom: +row[2],
-        howoften: +row[3],
-        oftenLevel: +row[4],
-        reachable: +row[5],
-        reachLevel: +row[6],
-        learned: +row[7]
-     }
-}
-//set the keys
-const whomkey = [
-    {id:1,whom:'boyfriend',color:'#9e7cc8'},
-    {id:2,whom:'friend',color:'#f9ab3c'},
-    {id:3,whom:'Stefanie',color:'#f69396'},
-    {id:4,whom:'coworker',color:'#e23047'},
-    {id:5,whom:'stranger',color:'#333'},
-    {id:6,whom:'famous person',color:'#999'}
-]
-const howoftenkey = [
-    {id:1,often:'not likely',color:'#494048',style:'1,5'},
-    {id:2,often:'like once a week',color:'#4a4b55',style:'5,5'},
-    {id:3,often:'pretty often',color:'#944a34',style:'1,5,5,5'},
-    {id:4,often:'every day',color:'#fc7345',style:'none'}
-]
-const reachablekey = [
-    {id:4,reachable:'Easily',color:'#eb4da2'},
-    {id:3,reachable:'Yes,if I had more willpower\/work harder',color:'#bd3484'},   
-    {id:2,reachable:'Hand, But could be',color:'#4a4b55'},
-    {id:1,reachable:'Nope',color:'#494048'}   
-]
-const learnedkey = [
-    {id:1,learned:'sometimes I don\'t like pants of my job',color:'#e23047'},
-    {id:2,learned:'I am a control freak!',color:'#5c608e'},
-    {id:3,learned:'I am indulgent',color:'#5d507b'},
-    {id:4,learned:'I am black on white',color:'#54b7d9'},
-    {id:5,learned:'there are areas I really need to improve',color:'#f9ab3c'},
-    {id:6,learned:'I don\'t have to \'SAVE\' my coat dresses!! Just wear them!',color:'#eb4da2'}
-]
-const typekey = [
-    {id:1,type:'having less Responsibilities',color:'#e23047'},
-    {id:2,type:'having more free time',color:'#fc7345'},
-    {id:3,type:'having clearer tasks to do',color:'#944a34'},
-    {id:4,type:'be more moderate/stable balanced',color:'#54b7d9'},
-    {id:5,type:'being able to take things easier',color:'#becde6'},
-    {id:6,type:'being less control freak',color:'#5c608e'},
-    {id:7,type:'be healthier(exeracel eat week)',color:'#999'},
-    {id:8,type:'English!! Mastering the languages/accent',color:'#eb4da2'},
-    {id:9,type:'How I look/dress/elegance',color:'#9e7cc8'},
-    {id:10,type:'CHARM!',color:'#333'}
-]
-const grid = [
-    {id:1,row:1,column:1},
-    {id:2,row:1,column:2},
-    {id:3,row:1,column:3},
-    {id:4,row:2,column:1},
-    {id:5,row:2,column:2},
-    {id:6,row:2,column:3},
-]
 
 </script>
 </body>
