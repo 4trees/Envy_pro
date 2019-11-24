@@ -148,7 +148,7 @@ var mainPlot = plot('mainplot',w,h), //for main data
 canvas.appendChild(mainPlot);
 samples.appendChild(samplePlot);
 keys.appendChild(keysPlot)
-console.log(canvas.clientWidth,canvas.clientHeight,mainPlot.width,mainPlot.height)
+
 //flag: if playing the explanation
 var playing;
 
@@ -168,10 +168,10 @@ whomkey.forEach(el=>{
 
 //initial
 playing = true;
-// showsample()
 showall(dataBywhom)
 legend()
 toggle()
+
 function toggle(){
   if(playing){
     desriptions.classList.add('hidden')
@@ -185,8 +185,6 @@ function toggle(){
     desriptions.classList.remove('hidden')
     canvas.classList.remove('hidden');
     legends.classList.remove('hidden');
-
-    // playing = true;
   }
 }
 // click explain me button
@@ -198,7 +196,7 @@ function explain(){
 function showsample(){
     //prepare to show
     const sample = document.createElementNS(xmlns,'g');
-          sample.style.transform = `translate(${w/5*2}px,${h/2}px)`;
+          sample.setAttribute('transform',`translate(${w/5*2},${h/2})`);
     const sampleWaveColor = whomkey.find(el=>el.id == 3).color;
     const sampleLineColor = typekey.find(el=>el.id == 8).color;
     const sampleTriColor = learnedkey.find(el=>el.id == 5).color;
@@ -212,7 +210,6 @@ function showsample(){
       sampleWave.classList.add('movewave');
     },1000)
     setTimeout(()=>{
-      // sampleCT.innerHTML = whomkey.find(el=>el.id == 3).whom;
       sampleCT.innerHTML = 'Someone!'
       sampleCT.style.fill = sampleWaveColor;
     },1100)
@@ -223,7 +220,6 @@ function showsample(){
       sampleCircle.classList.add('movecircle')
     },3000)
     setTimeout(()=>{
-      // sampleCT.innerHTML = typekey.find(el=>el.id == 8).type;
       sampleCT.innerHTML = 'For a thing!'
       sampleCT.style.fill = sampleLineColor;
     },3000)
@@ -234,7 +230,6 @@ function showsample(){
       sampleLine.classList.add('moveline')
     },4000)
     setTimeout(()=>{
-      // sampleCT.innerHTML = howoftenkey.find(el=>el.id == 4).often;
       sampleCT.innerHTML = 'So often!'
       sampleCT.style.fill = '#666';
     },4000)
@@ -249,7 +244,6 @@ function showsample(){
       }, 300);    
     },5000)       
     setTimeout(()=>{
-      // sampleCT.innerHTML = reachablekey.find(el=>el.id == 3).reachable + learnedkey.find(el=>el.id == 5).learned;
       sampleCT.innerHTML = 'It\'s reachable! I learned something!';
       sampleCT.style.fill = sampleTriColor;
     },5000)
@@ -272,7 +266,7 @@ function showall(dataBywhom){
     var y = grid.find(el=>el.id == data.whom).row % 2 ? h / 3 + 25 : h / 5 * 4 + 20;//group y
     const gapBetweenElement = 25;
     const group = document.createElementNS(xmlns,'g');
-    group.style.transform=`translate(${x}px,${y}px)`;
+    group.setAttribute('transform',`translate(${x},${y})`);
 
     //draw within group 
     data.values.sort((a,b)=>{return a.type-b.type}).forEach((data,i)=>{
@@ -282,7 +276,7 @@ function showall(dataBywhom){
       var oftenLevel = howoftenkey.find(el=>el.id == data.howoften).style;//line style
       var reachLevel = data.reachable;//triangle number
       const g = document.createElementNS(xmlns,'g');
-      g.style.transform = `translateX(${(i + 1) * gapBetweenElement}px)`;
+      g.setAttribute('transform',`translate(${(i + 1) * gapBetweenElement}, 0)`);
       const innerg = document.createElementNS(xmlns,'g');
       innerg.setAttribute('data-name','innerg')
       innerg.setAttribute('data-groupname',data.whom)
@@ -335,7 +329,7 @@ function legend(){
     var keyy = keyh / 3 * (grid.find(el=>el.id == i+1).row);//group y
     const iconLength = 35;
     const gap = 10;
-    key.style.transform = `translate(${keyx}px,${keyy}px)`;
+    key.setAttribute('transform',`translate(${keyx},${keyy})`);
 
     var icon,name;
     switch(i){
@@ -345,14 +339,14 @@ function legend(){
         break;
       case 1:
         icon = line(0,iconLength,0,0,'#333',2,'1',1);//line(x1,x2,y1,y2,color,width,dash,opacity)
-        icon.style.transform = 'rotate(0deg)';
+        icon.setAttribute('transform','rotate(0)');
         name = texttag('How often this happend',iconLength + gap,0,'#666','.6em',1,'keys','howOften');
         break;
       case 2:
         icon = document.createElementNS(xmlns,'g')
         for(var n=0;n<4;n++){
           var tri = triangle([0,n * 10],10,'#333')//triangle(midpoint,size,color)
-          tri.style.transform = 'rotate(270deg)';
+          tri.setAttribute('transform','rotate(270)');
           icon.appendChild(tri)
         }
         name = texttag('How reachable is this thing',iconLength + gap,0,'#666','.6em',1,'keys','howReachable');
@@ -363,12 +357,12 @@ function legend(){
         break;
       case 4:
         icon = line(0,iconLength,0,0,'#333',2,'null',1);//line(x1,x2,y1,y2,color,width,dash,opacity)
-        icon.style.transform = 'rotate(0deg)';
+        icon.setAttribute('transform','rotate(0)');
         name = texttag('Level of the envy of feeling',iconLength + gap,0,'#666','.6em',1,'keys','LevelOfFeeling');
         break;
       case 5:
         icon = triangle([0,10+5],10,'#e23047')
-        icon.style.transform = 'rotate(270deg)';
+        icon.setAttribute('transform','rotate(270)');
         name = texttag('What I learned',iconLength + gap,0,'#666','.6em',1,'keys','Learn');
         break;
     }
@@ -414,7 +408,6 @@ function legend(){
             }
             
           })
-          // tris[legend3].style.fill = '#333';
           if (++legend3 > 3){
             legend3 = 0;
           }
@@ -447,7 +440,6 @@ function legend(){
   })
   const key1 = document.querySelector('[data-key=legend1]')
   const key2 = document.querySelector('[data-key=legend2]')
-
   const key4 = document.querySelector('[data-key=legend4]')
 
 
@@ -463,7 +455,7 @@ function animation(){
     if((el.dataset.num && el.dataset.num !== this.dataset.num) || (el.dataset.groupname != this.dataset.groupname && el.dataset.name == 'wave')){
       el.style.opacity =  .3;
     }
-    el.style.transform = el.dataset.num == this.dataset.num ? 'scale(1.3)' : 'scale(1)'
+    el.setAttribute('transform', el.dataset.num == this.dataset.num ? 'scale(1.3)' : 'scale(1)')
   })
 
 }
@@ -471,7 +463,7 @@ function animationout(){
   const innergs = document.querySelectorAll('[data-groupname]')
   innergs.forEach(el=>{
     el.style.opacity = el.dataset.name == 'grouptag' ? 0 : 1 ;
-    el.style.transform = 'scale(1)';
+    el.setAttribute('transform','scale(1)');
   })
 }
 
@@ -482,7 +474,7 @@ function plot(id,w,h){
   plot.setAttribute('xmlns',xmlns);
   plot.setAttribute('width',w);
   plot.setAttribute('height',h);
-  plot.style.transform = "translateX(20px)";
+  plot.setAttribute('transform',"translate(20,0)");
 return plot
 }
 //draw line
@@ -498,7 +490,7 @@ function line(x1,x2,y1,y2,color,width,dash,opacity){
     line.style.strokeDasharray = dash;
     line.style.strokeLinecap = 'round';
     line.style.opacity = opacity;
-    line.style.transform = 'rotate(225deg)';
+    line.setAttribute('transform','rotate(225)');
 return line
 }
 //draw triangle
@@ -513,7 +505,7 @@ function triangle(midpoint,size,color){
     const points = `${x1},${y1} ${x2},${y2} ${x3},${y3}`;
     triangle.setAttribute('points',points)
     triangle.style.fill = color;
-    triangle.style.transform = 'rotate(225deg)';
+    triangle.setAttribute('transform','rotate(225)');
 return triangle;
 }
 //draw circle
@@ -563,7 +555,6 @@ function wave(startPointX,startPointY,waveNumber,length,width,color,groupName){
   wave.setAttribute('data-name','wave');
 return wave;
 }
-
 
 </script>
 </body>
